@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow // Premium Task Manager</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glass-bg-blobs">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="app-container">
+    <header class="header">
+      <div class="logo">
+        <span class="logo-accent">⚡</span> TaskFlow
+      </div>
+      <p class="tagline">Manage your projects with speed and clarity</p>
+    </header>
+
+    <!-- Stats Dashboard -->
+    <section class="stats-dashboard">
+      <div class="stat-card" id="stat-total">
+        <span class="stat-num">0</span>
+        <span class="stat-label">Total Tasks</span>
+      </div>
+      <div class="stat-card" id="stat-pending">
+        <span class="stat-num">0</span>
+        <span class="stat-label">Pending</span>
+      </div>
+      <div class="stat-card" id="stat-completed">
+        <span class="stat-num text-success">0</span>
+        <span class="stat-label">Completed</span>
+      </div>
+    </section>
+
+    <!-- Task Creator Form -->
+    <section class="form-container">
+      <form id="task-form">
+        <div class="input-group">
+          <input type="text" id="task-title" placeholder="What needs to be done?" required autocomplete="off">
+          <label for="task-title">Task Title</label>
+        </div>
+        <div class="input-group">
+          <textarea id="task-desc" placeholder="Add details or context (optional)" rows="2"></textarea>
+          <label for="task-desc">Description</label>
+        </div>
+        <button type="submit" class="btn-primary">
+          <span>Create Task</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </form>
+    </section>
+
+    <!-- Tasks List Container -->
+    <main class="tasks-container">
+      <div class="tasks-header">
+        <h2>Your Tasks</h2>
+        <span id="tasks-count" class="badge">0</span>
+      </div>
+      
+      <!-- Loading State -->
+      <div id="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading tasks...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state hidden">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+        <h3>No tasks found</h3>
+        <p>Create a task above to get started.</p>
+      </div>
+
+      <!-- Real task items render here -->
+      <div id="tasks-list" class="tasks-list"></div>
+    </main>
+
+    <footer class="footer">
+      <p>Built with Node.js, Express, Prisma & Vanilla CSS</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
