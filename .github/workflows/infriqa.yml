@@ -1,0 +1,125 @@
+name: CD Pipeline
+'on':
+  push:
+    branches:
+    - InfrIQa
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+env:
+  AZURE_SUBSCRIPTION_ID: 8e01f6cc-5b9c-4ef8-b1b6-d22da79fc819
+  AZURE_RESOURCE_GROUP: prodTest-dev-rg
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.12'
+jobs:
+  deploy-frontend-prodtest-dev-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Set Active Azure Subscription
+      run: az account set --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Set Frontend Environment Variables
+      run: echo "API_URL=https://prodtest-dev-backend.azurewebsites.net" >> .env && echo "API_URL=https://prodtest-dev-backend.azurewebsites.net" >> .env.production
+    - name: Build frontend
+      run: npm run build
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.STATIC_WEB_APP }}
+        repo_token: ${{ github.token }}
+        action: upload
+        app_location: .
+        output_location: dist
+    - name: Verify Frontend Deployment
+      run: "echo 'Verifying frontend deployment health at https://proud-wave-05e578710.7.azurestaticapps.net...'\nsuccess=false\nwait_sec=5\nfor i in {1..10}; do\n  if curl -s -f \"https://proud-wave-05e578710.7.azurestaticapps.net\" > /dev/null; then\n    echo '\u2705 Frontend health check passed!'\n    success=true\n    break\n  fi\n  echo \"Attempt $i failed. Retrying in ${wait_sec}s...\"\n  sleep $wait_sec\n  wait_sec=$((wait_sec * 2 > 120 ? 120 : wait_sec * 2))\ndone\nif [ \"$success\" = false ]; then\n  echo '\u274C Frontend health check failed after all attempts.'\n  exit 1\nfi"
+  deploy-backend-prodtest-dev-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Set Active Azure Subscription
+      run: az account set --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
+    - name: Configure App Service CORS, App Settings and Startup Command
+      run: |-
+        az webapp config appsettings set --name prodtest-dev-backend --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --settings NODE_ENV="production"
+        az webapp config set --name prodtest-dev-backend --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --startup-file "npx prisma migrate deploy && node src/server.js"
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: npm
+        cache-dependency-path: package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Generate Prisma Client
+      run: npx prisma generate
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: prodtest-dev-backend
+        slot-name: production
+        package: .
+        publish-profile: ${{ secrets.APP_SERVICE }}
+    - name: Verify Backend Deployment
+      run: "echo 'Verifying backend deployment health at https://prodtest-dev-backend.azurewebsites.net...'\nsuccess=false\nwait_sec=5\nfor i in {1..10}; do\n  if curl -s -f \"https://prodtest-dev-backend.azurewebsites.net/health\" > /dev/null || curl -s -f \"https://prodtest-dev-backend.azurewebsites.net/api/health\" > /dev/null || curl -s -f \"https://prodtest-dev-backend.azurewebsites.net\" > /dev/null; then\n    echo '\u2705 Backend health check passed!'\n    success=true\n    break\n  fi\n  echo \"Attempt $i failed. Retrying in ${wait_sec}s...\"\n  sleep $wait_sec\n  wait_sec=$((wait_sec * 2 > 120 ? 120 : wait_sec * 2))\ndone\nif [ \"$success\" = false ]; then\n  echo '\u274C Backend health check failed after all attempts.'\n  exit 1\nfi"
+  deploy-database-prodtest-dev-pg:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Verify PostgreSQL Flexible Server
+      run: az postgres flexible-server show --name prodtest-dev-pg --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query 'fullyQualifiedDomainName' -o tsv
+  configure-cors:
+    runs-on: ubuntu-latest
+    needs:
+    - deploy-frontend-prodtest-dev-frontend
+    - deploy-backend-prodtest-dev-backend
+    steps:
+    - name: Login to Azure
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Set Active Azure Subscription
+      run: az account set --subscription ${{ env.AZURE_SUBSCRIPTION_ID }}
+    - name: Configure CORS and Frontend URL on Backend
+      run: |-
+        echo "Fetching Static Web App actual live hostname..."
+        FRONTEND_HOST=$(az staticwebapp environment list --name prodtest-dev-frontend --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query "[0].hostname" -o tsv)
+        if [ -z "$FRONTEND_HOST" ]; then
+          echo "Could not fetch SWA hostname via environment list, trying fallback..."
+          FRONTEND_HOST=$(az staticwebapp show --name prodtest-dev-frontend   --resource-group ${{ env.AZURE_RESOURCE_GROUP }}   --query "defaultHostname" -o tsv)
+        fi
+        if [ -z "$FRONTEND_HOST" ]; then
+          echo "Could not fetch SWA hostname. Skipping CORS configuration."
+          exit 0
+        fi
+        echo "Frontend hostname: $FRONTEND_HOST"
+        echo "Setting CORS_ORIGIN app setting on backend (no platform CORS)..."
+        az webapp config appsettings set --name prodtest-dev-backend --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --settings CORS_ORIGIN="https://$FRONTEND_HOST" FRONTEND_URL="https://$FRONTEND_HOST"
