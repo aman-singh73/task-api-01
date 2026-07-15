@@ -15,11 +15,11 @@ terraform {
     }
   }
 
-  # Remote state for PR / drift healing (analytic Square — Azure subscription 1 / 8e01f6cc).
-  # Do not overwrite the root blob key "terraform.tfstate" (used by another stack).
+  # Remote state for prodTest stack only (analytic Square / 8e01f6cc).
+  # Dedicated SA — not shared with amanNew / amantfstate8e01sa.
   backend "azurerm" {
-    resource_group_name  = "amantfstate8e01rg"
-    storage_account_name = "amantfstate8e01sa"
+    resource_group_name  = "prodtest-tfstate-rg"
+    storage_account_name = "prodtesttfstate8e01"
     container_name       = "tfstate"
     key                  = "prodTest/dev/terraform.tfstate"
   }
