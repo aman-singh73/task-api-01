@@ -83,6 +83,11 @@ module "shared_plan" {
     owner = "governance-required"
     prodTest-dev-plan = "governance-required"
     project = "governance-required"
+  }, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    prodTest-dev-plan = "governance-required"
+    project = "governance-required"
   })
 }
 
@@ -155,6 +160,10 @@ module "frontend_app" {
     cost_center = "governance-required"
     owner = "governance-required"
     project = "governance-required"
+  }, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
   })
 }
 
@@ -176,6 +185,10 @@ module "task_manager_api_app" {
   }
   service_plan_id = module.shared_plan.id
   tags            = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
+  }, {
     cost_center = "governance-required"
     owner = "governance-required"
     project = "governance-required"
