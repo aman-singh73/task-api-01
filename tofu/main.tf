@@ -78,7 +78,12 @@ module "shared_plan" {
     size     = "B1"
     capacity = 1
   }
-  tags = local.common_tags
+  tags = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    prodTest-dev-plan = "governance-required"
+    project = "governance-required"
+  })
 }
 
 # ========================================
@@ -146,7 +151,11 @@ module "frontend_app" {
   resource_group_name = module.main_rg.name
   sku_size            = "Free"
   sku_tier            = "Free"
-  tags                = local.common_tags
+  tags                = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
+  })
 }
 
 # Module: task_manager_api_app (azurerm_linux_web_app)
@@ -166,5 +175,9 @@ module "task_manager_api_app" {
     version  = var.task_manager_api_node_version
   }
   service_plan_id = module.shared_plan.id
-  tags            = local.common_tags
+  tags            = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
+  })
 }
