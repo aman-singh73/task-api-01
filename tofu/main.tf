@@ -58,7 +58,11 @@ module "log_analytics" {
   resource_group_name = module.main_rg.name
   retention_in_days   = 30
   sku                 = "PerGB2018"
-  tags                = local.common_tags
+  tags                = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
+  })
 }
 
 # ========================================
@@ -87,6 +91,10 @@ module "shared_plan" {
     cost_center = "governance-required"
     owner = "governance-required"
     prodTest-dev-plan = "governance-required"
+    project = "governance-required"
+  }, {
+    cost_center = "governance-required"
+    owner = "governance-required"
     project = "governance-required"
   })
 }
@@ -164,6 +172,10 @@ module "frontend_app" {
     cost_center = "governance-required"
     owner = "governance-required"
     project = "governance-required"
+  }, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
   })
 }
 
@@ -185,6 +197,10 @@ module "task_manager_api_app" {
   }
   service_plan_id = module.shared_plan.id
   tags            = merge(local.common_tags, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
+  }, {
     cost_center = "governance-required"
     owner = "governance-required"
     project = "governance-required"
