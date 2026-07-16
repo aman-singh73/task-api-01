@@ -210,3 +210,26 @@ module "task_manager_api_app" {
     project = "governance-required"
   })
 }
+
+# Module: prodtestdriftheal3 (azurerm_storage_account)
+module "prodtestdriftheal3" {
+  source = "./modules/azure-storage-account"
+
+  name = "prodtestdriftheal3"
+  location = "centralus"
+  resource_group_name = "prodTest-dev-rg"
+  account_tier = "Standard"
+  account_replication_type = "LRS"
+  account_kind = "StorageV2"
+  tags = {
+    environment = "dev",
+    managed_by = "cloud-dhan",
+    purpose = "drift-type3-test"
+  }
+}
+
+import {
+  to = module.prodtestdriftheal3.azurerm_storage_account.this
+  id = "/subscriptions/8e01f6cc-5b9c-4ef8-b1b6-d22da79fc819/resourceGroups/prodTest-dev-rg/providers/Microsoft.Storage/storageAccounts/prodtestdriftheal3"
+}
+
