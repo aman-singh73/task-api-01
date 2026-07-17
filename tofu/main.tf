@@ -96,6 +96,10 @@ module "shared_plan" {
     cost_center = "governance-required"
     owner = "governance-required"
     project = "governance-required"
+  }, {
+    cost_center = "governance-required"
+    owner = "governance-required"
+    project = "governance-required"
   })
 }
 
